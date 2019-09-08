@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+            http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+    version="2.5" xmlns="http://java.sun.com/xml/ns/javaee">
+	<display-name>大众点评</display-name>
+	<welcome-file-list>
+		<welcome-file>index.jsp</welcome-file>
+	</welcome-file-list>
+	
+	<!-- Spring根上下文加载的是此配置文件 -->
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath:spring/root-context.xml</param-value>
+	</context-param>
+	
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	
+	<!-- 编码过滤器 -->
+	<filter>
+		<filter-name>CharacterEncodingFilter</filter-name>
+		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<init-param>
+			<param-name>encoding</param-name>
+			<param-value>UTF-8</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>CharacterEncodingFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+		
+	<!-- 
+		因为hiddenFilter是无法解析其中的method参数的，所以配置了这个文件上传的过滤器，
+		而且这个文件解析过滤器必须配置在hiddenHttpMethodFilter之前，
+		这个过滤器会将文件上传这种格式的流中的参数解析，然后提交给hiddenHttpMethodFilter久可以正常解析请求参数了。
+	 -->
+	 <!-- 
+	 	而这时我们遇见了另一个棘手的问题，MultipartFilter在加载multipartResolverBeanName参数的时候
+	 	是从Spring的根应用上下文中获取的，但是我们在开始的时候并没有将文件上传解析器配置在根上下文所在的xml文件中，
+	 	所以会出现错误。
+	  -->
+	<filter>
+		<filter-name>MultipartFilter</filter-name>
+		<filter-class>org.springframework.web.multipart.support.MultipartFilter</filter-class>
+		<init-param>
+			<param-name>multipartResolverBeanName</param-name>
+			<!-- 文件上传解析器的ID -->
+			<param-value>multipartResolver</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>MultipartFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	
+	<!-- 
+		为了让Spring支持RESTful风格，所以加入此过滤器，它的目的是获取前端传来request中name为_method的请求参数，
+	 	转换为对应的Http动作。
+	 	但是过滤却不能解析文件上传这种格式的流中的参数。
+	 -->
+	<filter>
+		<filter-name>hiddenHttpMethodFilter</filter-name>
+		<filter-class>org.springframework.web.filter.HiddenHttpMethodFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>hiddenHttpMethodFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<servlet>
+		<servlet-name>spring</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<!-- 它是DispatcherServlet自己的上下文所加载的配置文件。 -->
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>classpath:spring/applicationContext.xml</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>spring</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+
+	<!--配置所有的jsp页面都默认包含common.jsp-->
+	<jsp-config>
+		<jsp-property-group>
+			<url-pattern>*.jsp</url-pattern>
+			<include-prelude>/WEB-INF/jsp/system/common.jsp</include-prelude>
+		</jsp-property-group>
+	</jsp-config>
+</web-app>

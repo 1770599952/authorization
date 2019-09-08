@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ycu.dao.SysUserLogDao" >
+    <resultMap id="BaseResultMap" type="com.ycu.bean.SysUserLog" >
+        <id column="log_id" property="logId" jdbcType="VARCHAR" />
+        <result column="user_id" property="userId" jdbcType="VARCHAR" />
+        <result column="module_name" property="moduleName" jdbcType="VARCHAR" />
+        <result column="operate" property="operate" jdbcType="VARCHAR" />
+        <result column="time" property="time" jdbcType="TIMESTAMP" />
+        <result column="class_name" property="className" jdbcType="VARCHAR" />
+        <result column="method_name" property="methodName" jdbcType="VARCHAR" />
+        <result column="params" property="params" jdbcType="VARCHAR" />
+        <result column="ip" property="ip" jdbcType="VARCHAR" />
+    </resultMap>
+    <resultMap type="com.ycu.bean.SysUserLog" id="BaseResultMapExt" extends="BaseResultMap">
+        <result column="username" property="username" jdbcType="VARCHAR" />
+        <result column="full_name" property="organizationName" jdbcType="VARCHAR" />
+    </resultMap>
+    <sql id="BaseColumn">
+        log_id, user_id, module_name, operate, time, class_name, method_name, params, ip
+    </sql>
+    <insert id="insertToTable">
+        insert into ${tableName}
+        (log_id, user_id, module_name, operate, time, class_name, method_name, params, ip)
+        values
+        (
+        #{log.logId,jdbcType=VARCHAR},
+        #{log.userId,jdbcType=VARCHAR},
+        #{log.moduleName,jdbcType=VARCHAR},
+        #{log.operate,jdbcType=VARCHAR},
+        #{log.time,jdbcType=TIMESTAMP},
+        #{log.className,jdbcType=VARCHAR},
+        #{log.methodName,jdbcType=VARCHAR},
+        #{log.params,jdbcType=VARCHAR},
+        #{log.ip,jdbcType=VARCHAR}
+        )
+    </insert>
+    <insert id="insert" parameterType="com.ycu.bean.SysUserLog" >
+        insert into sys_user_log
+        (log_id, user_id, module_name, operate, time, class_name, method_name, params, ip)
+        values
+        (
+        #{logId,jdbcType=VARCHAR},
+        #{userId,jdbcType=VARCHAR},
+        #{moduleName,jdbcType=VARCHAR},
+        #{operate,jdbcType=VARCHAR},
+        #{time,jdbcType=TIMESTAMP},
+        #{className,jdbcType=VARCHAR},
+        #{methodName,jdbcType=VARCHAR},
+        #{params,jdbcType=VARCHAR},
+        #{ip,jdbcType=VARCHAR}
+        )
+    </insert>
+    <!-- <select id="selectAll" resultMap="BaseResultMap">
+      select
+      <include refid="BaseColumn"/>
+      from sys_user_log
+    </select> -->
+    <select id="selectAll" resultMap="BaseResultMapExt" parameterType="com.ycu.dto.SysUserLogQuery">
+        SELECT
+        U.USERNAME,
+        O.FULL_NAME,
+        UL.LOG_ID,
+        UL.USER_ID,
+        UL.MODULE_NAME,
+        UL.OPERATE,
+        UL.TIME,
+        UL.CLASS_NAME,
+        UL.METHOD_NAME,
+        UL.PARAMS,
+        UL.IP
+        FROM
+        V_USER_LOG UL
+        INNER JOIN SYS_USER U ON U.USER_ID = UL.USER_ID
+        INNER JOIN SYS_ORGANIZATION O ON O.ORGANIZATION_ID = U.ORGANIZATION_ID
+        <where>
+            <if test="organizationId != null and organizationId != ''">
+                AND O.ORGANIZATION_ID = #{organizationId,jdbcType=VARCHAR}
+            </if>
+            <if test="organizationIds != null">
+                AND O.ORGANIZATION_ID IN
+                <foreach collection="organizationIds" item="oid" open="(" separator="," close=")">
+                    #{oid,jdbcType=VARCHAR}
+                </foreach>
+            </if>
+            <if test="username != null and username != ''">
+                AND UL.USER_ID LIKE CONCAT('%',#{username,jdbcType=VARCHAR},'%')
+            </if>
+            <if test="moduleName != null and moduleName != ''">
+                AND UL.MODULE_NAME LIKE CONCAT('%',#{moduleName,jdbcType=VARCHAR},'%')
+            </if>
+        </where>
+        ORDER BY UL.TIME DESC
+    </select>
+    <select id="selectAllByTables" resultMap="BaseResultMapExt">
+        SELECT
+        U.USERNAME,
+        O.FULL_NAME,
+        UL.LOG_ID,
+        UL.USER_ID,
+        UL.MODULE_NAME,
+        UL.OPERATE,
+        UL.TIME,
+        UL.CLASS_NAME,
+        UL.METHOD_NAME,
+        UL.PARAMS,
+        UL.IP
+        FROM
+        ${table} UL
+        INNER JOIN SYS_USER U ON U.USER_ID = UL.USER_ID
+        INNER JOIN SYS_ORGANIZATION O ON O.ORGANIZATION_ID = U.ORGANIZATION_ID
+        <where>
+            <if test="query.organizationId != null and query.organizationId != ''">
+                AND O.ORGANIZATION_ID = #{query.organizationId,jdbcType=VARCHAR}
+            </if>
+            <if test="query.organizationIds != null">
+                AND O.ORGANIZATION_ID IN
+                <foreach collection="query.organizationIds" item="oid" open="(" separator="," close=")">
+                    #{oid,jdbcType=VARCHAR}
+                </foreach>
+            </if>
+            <if test="query.username != null and query.username != ''">
+                AND U.USERNAME LIKE CONCAT('%',#{query.username,jdbcType=VARCHAR},'%')
+            </if>
+            <if test="query.moduleName != null and query.moduleName != ''">
+                AND UL.MODULE_NAME LIKE CONCAT('%',#{query.moduleName,jdbcType=VARCHAR},'%')
+            </if>
+            <if test="query.startTime != null and query.endTime != null">
+                AND UL.TIME BETWEEN #{query.startTime,jdbcType=TIMESTAMP} AND #{query.endTime,jdbcType=TIMESTAMP}
+            </if>
+        </where>
+        ORDER BY UL.TIME DESC
+    </select>
+</mapper>

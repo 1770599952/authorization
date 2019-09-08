@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans  
+	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+	http://www.springframework.org/schema/aop
+      http://www.springframework.org/schema/aop/spring-aop.xsd">
+      
+    <bean id="springUtil" class="com.ycu.util.SpringUtil"></bean>
+	<!-- 扫描service包 -->
+	<context:component-scan base-package="com.ycu.service" />
+	<!-- 配置事务管理器 -->
+	<bean id="transactionManager"  class="org.springframework.jdbc.datasource.DataSourceTransactionManager">  
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+	<!-- 事务采用全注解方式 
+		探索@Transactional注解： 
+		你可以指定传播、隔离级别、超时以及允许和不允许的异常。 
+		@Transactional注解的属性: 
+		propagation：指定事务定义中使用的传播 
+		isolation：设定事务的隔离级别 
+		timeout：指定事务的超市（秒） 
+		readOnly：指定事务的超时 
+		noRollbackFor：目标方法可抛出的异常所构成的数组，但通知仍会提交事务 
+		rollbackFor：异常所构成的数组，如果目标方法抛出了这些异常，通知就会回滚事务 
+	-->
+	<tx:annotation-driven transaction-manager="transactionManager"/>
+
+	<!--日志切面-->
+ 	<bean id="logInterceptor" class="com.ycu.controller.interceptor.LogInterceptor"></bean>
+	<aop:config>
+		<aop:aspect id="logAop" ref="logInterceptor">
+			<aop:pointcut expression="execution(* com.ycu.service.*.*.*(..))" id="logPoint"/>
+			<aop:after-returning method="afterReturning" pointcut-ref="logPoint" />
+		</aop:aspect>
+	</aop:config> 
+</beans>
